@@ -6,24 +6,20 @@ import com.gameengine.graphics.RendererFactory;
 import com.gameengine.input.InputManager;
 import com.gameengine.scene.Scene;
 
-
+/**
+ * 游戏引擎
+ */
 public class GameEngine {
     private IRenderer renderer;
     private InputManager inputManager;
     private Scene currentScene;
-    private PhysicsSystem physicsSystem;
     private boolean running;
     private float targetFPS;
     private float deltaTime;
     private long lastTime;
     @SuppressWarnings("unused")
     private String title;
-    // 新录制服务（可选）
-    private com.gameengine.recording.RecordingService recordingService;
-    
-    public GameEngine(int width, int height, String title) {
-        this(width, height, title, RenderBackend.GPU);
-    }
+    private GamePerformance gamePerformance;
     
     public GameEngine(int width, int height, String title, RenderBackend backend) {
         this.title = title;
@@ -33,13 +29,20 @@ public class GameEngine {
         this.targetFPS = 60.0f;
         this.deltaTime = 0.0f;
         this.lastTime = System.nanoTime();
+        this.gamePerformance = new GamePerformance();
         
     }
     
+    /**
+     * 初始化游戏引擎
+     */
     public boolean initialize() {
-        return true;
+        return true; // Swing渲染器不需要特殊初始化
     }
     
+    /**
+     * 运行游戏引擎
+     */
     public void run() {
         if (!initialize()) {
             System.err.println("游戏引擎初始化失败");
@@ -50,11 +53,6 @@ public class GameEngine {
         
         if (currentScene != null) {
             currentScene.initialize();
-            if (currentScene.getName().equals("MainMenu")) {
-                physicsSystem = null;
-            } else {
-                physicsSystem = new PhysicsSystem(currentScene, renderer.getWidth(), renderer.getHeight());
-            }
             
         }
         
@@ -72,8 +70,6 @@ public class GameEngine {
                 lastFrameTime = currentTime;
             }
             
-            renderer.pollEvents();
-            
             if (renderer.shouldClose()) {
                 running = false;
             }
@@ -86,133 +82,143 @@ public class GameEngine {
         }
     }
     
+    /**
+     * 更新游戏逻辑
+     */
     private void update() {
+        // 计算时间间隔
         long currentTime = System.nanoTime();
-        deltaTime = (currentTime - lastTime) / 1_000_000_000.0f;
+        deltaTime = (currentTime - lastTime) / 1_000_000_000.0f; // 转换为秒
         lastTime = currentTime;
+
+        // 计算游戏帧率
+        gamePerformance.update(deltaTime);
         
+        // 处理事件（先处理输入事件）
         renderer.pollEvents();
         
-        
-        
+        // 更新场景
         if (currentScene != null) {
             currentScene.update(deltaTime);
         }
         
-        if (physicsSystem != null) {
-            physicsSystem.update(deltaTime);
-        }
-        
-        if (recordingService != null && recordingService.isRecording()) {
-            recordingService.update(deltaTime, currentScene, inputManager);
-        }
-        
+        // 清除输入状态（在场景update之后）
         inputManager.update();
         
-        if (inputManager.isKeyPressed(27)) {
+        // 检查退出条件（支持多种ESC键码）
+        if (inputManager.isKeyPressed(27) || inputManager.isKeyPressed(256)) { // ESC键（27=传统码，256=GLFW码）
             running = false;
-            cleanup();
+            gamePerformance.printSummary(); // 打印平均帧率统计
+            renderer.cleanup();
         }
         
-        if (renderer.shouldClose() && running) {
+        // 检查窗口是否关闭
+        if (renderer.shouldClose()) {
             running = false;
-            cleanup();
+            gamePerformance.printSummary(); // 打印平均帧率统计
         }
     }
     
+    /**
+     * 渲染游戏
+     */
     private void render() {
-        if (renderer == null) return;
-        
         renderer.beginFrame();
         
+        // 渲染场景
         if (currentScene != null) {
             currentScene.render();
         }
-        
+
+        // 渲染帧率
+        gamePerformance.render(renderer);
+
         renderer.endFrame();
     }
     
+    /**
+     * 设置当前场景
+     */
     public void setScene(Scene scene) {
-        if (currentScene != null) {
-            if (physicsSystem != null) {
-                physicsSystem.cleanup();
-                physicsSystem = null;
-            }
-            currentScene.clear();
-        }
         this.currentScene = scene;
-        if (scene != null) {
-            if (running) {
-                scene.initialize();
-                if (!scene.getName().equals("MainMenu") && !scene.getName().equals("Replay")) {
-                    physicsSystem = new PhysicsSystem(scene, renderer.getWidth(), renderer.getHeight());
-                }
-            }
+        if (scene != null && running) {
+            scene.initialize();
         }
     }
     
+    /**
+     * 获取当前场景
+     */
     public Scene getCurrentScene() {
         return currentScene;
     }
     
+    /**
+     * 停止游戏引擎
+     */
     public void stop() {
         running = false;
     }
+
+    /**
+     * 游戏结束
+     */
+    public void gameOver() {
+        stop();
+        gamePerformance.printSummary(); // 打印平均帧率统计
+        System.out.println("Game Over");
+        cleanup();
+        System.exit(0);
+    }
     
-    public void cleanup() {
-        if (recordingService != null && recordingService.isRecording()) {
-            try { recordingService.stop(); } catch (Exception ignored) {}
-        }
-        if (physicsSystem != null) {
-            physicsSystem.cleanup();
-        }
+    /**
+     * 清理资源
+     */
+    private void cleanup() {
         if (currentScene != null) {
             currentScene.clear();
         }
         renderer.cleanup();
     }
-
-    // 可选：外部启用录制（按需调用）
-    public void enableRecording(com.gameengine.recording.RecordingService service) {
-        this.recordingService = service;
-        try {
-            if (service != null && currentScene != null) {
-                service.start(currentScene, renderer.getWidth(), renderer.getHeight());
-            }
-        } catch (Exception e) {
-            System.err.println("录制启动失败: " + e.getMessage());
-        }
-    }
-
-    public void disableRecording() {
-        if (recordingService != null && recordingService.isRecording()) {
-            try { recordingService.stop(); } catch (Exception ignored) {}
-        }
-        recordingService = null;
-    }
     
-    
-    
+    /**
+     * 获取渲染器
+     */
     public IRenderer getRenderer() {
         return renderer;
     }
     
+    /**
+     * 获取输入管理器
+     */
     public InputManager getInputManager() {
         return inputManager;
     }
     
+    /**
+     * 获取时间间隔
+     */
     public float getDeltaTime() {
         return deltaTime;
     }
     
+    /**
+     * 设置目标帧率
+     */
     public void setTargetFPS(float fps) {
         this.targetFPS = fps;
     }
     
+    /**
+     * 获取目标帧率
+     */
     public float getTargetFPS() {
         return targetFPS;
     }
     
+    /**
+     * 检查引擎是否正在运行
+     */
     public boolean isRunning() {
         return running;
     }

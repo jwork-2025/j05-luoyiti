@@ -35,6 +35,7 @@ public class GPURenderer implements IRenderer {
         this.height = height;
         this.title = title;
         this.inputManager = InputManager.getInstance();
+
         this.initialized = false;
         this.window = 0;
         this.charTextures = new HashMap<>();
@@ -46,6 +47,7 @@ public class GPURenderer implements IRenderer {
     }
     
     private void initialize() {
+        
         try {
             System.setProperty("java.awt.headless", "true");
             GLFWErrorCallback.createPrint(System.err).set();
@@ -225,7 +227,7 @@ public class GPURenderer implements IRenderer {
     }
     
     @Override
-    public void drawText(float x, float y, String text, float r, float g, float b, float a) {
+    public void drawText(String text, float x, float y, float size, float r, float g, float b, float a) {
         if (!initialized || text == null || text.isEmpty()) return;
         
         if (!texturesPreloaded) {
@@ -237,8 +239,8 @@ public class GPURenderer implements IRenderer {
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         
         float currentX = x;
-        float charHeight = fontSize;
-        float charWidth = fontSize * 0.6f;
+        float charHeight = size;
+        float charWidth = size * 0.6f;
         float spacing = 1.0f;
         
         for (int i = 0; i < text.length(); i++) {
@@ -270,6 +272,45 @@ public class GPURenderer implements IRenderer {
         
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
         GL11.glDisable(GL11.GL_TEXTURE_2D);
+    }
+    
+    @Override
+    public void drawHealthBar(float x, float y, float width, float height, int currentHealth, int maxHealth) {
+        if (!initialized) return;
+        
+        // 绘制血条背景（深灰色）
+        drawRect(x, y, width, height, 0.2f, 0.2f, 0.2f, 1.0f);
+        
+        // 计算当前血量百分比
+        float healthPercentage = Math.max(0, Math.min(1, (float) currentHealth / maxHealth));
+        
+        // 根据血量百分比确定颜色
+        float r, g, b;
+        if (healthPercentage > 0.6f) {
+            // 高血量：绿色
+            r = 0.0f;
+            g = 1.0f;
+            b = 0.0f;
+        } else if (healthPercentage > 0.3f) {
+            // 中等血量：黄色
+            r = 1.0f;
+            g = 1.0f;
+            b = 0.0f;
+        } else {
+            // 低血量：红色
+            r = 1.0f;
+            g = 0.0f;
+            b = 0.0f;
+        }
+        
+        // 绘制当前血量（彩色前景）
+        drawRect(x, y, width * healthPercentage, height, r, g, b, 1.0f);
+        
+        // 绘制血条边框（白色）
+        drawLine(x, y, x + width, y, 1.0f, 1.0f, 1.0f, 1.0f);
+        drawLine(x + width, y, x + width, y + height, 1.0f, 1.0f, 1.0f, 1.0f);
+        drawLine(x + width, y + height, x, y + height, 1.0f, 1.0f, 1.0f, 1.0f);
+        drawLine(x, y + height, x, y, 1.0f, 1.0f, 1.0f, 1.0f);
     }
     
     private void preloadTextures() {
@@ -513,7 +554,7 @@ public class GPURenderer implements IRenderer {
     
     @Override
     public boolean shouldClose() {
-        if (!initialized) return false;
+        if (!initialized || window == MemoryUtil.NULL) return false;
         return GLFW.glfwWindowShouldClose(window);
     }
     

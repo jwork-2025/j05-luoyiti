@@ -50,4 +50,4 @@ if exist "%NATIVES_PATH%" (
 
 rem 运行程序
 echo Running game...
-java %JAVA_FLAGS% -cp "%CLASSPATH%" com.gameengine.example.Game
+java %JAVA_FLAGS% -cp "%CLASSPATH%" com.gameengine.app.Game
