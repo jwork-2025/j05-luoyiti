@@ -1,5 +1,7 @@
 package com.gameengine.core;
 
+import com.gameengine.components.LifeFeatureComponent;
+import com.gameengine.components.RenderComponent;
 import com.gameengine.math.Vector2;
 import java.util.*;
 
@@ -11,11 +13,20 @@ public class GameObject {
     protected String name;
     protected String identity = "None";
     protected final List<Component<?>> components;
+    public String MovingSteps;
+    LinkedHashMap<String, String> MovingStepsMap;
     
     public GameObject() {
         this.active = true;
         this.name = "GameObject";
         this.components = new ArrayList<>();
+        this.MovingSteps = "";
+        this.MovingStepsMap = new LinkedHashMap<String, String>() {{
+            put("GameIdentity", "");
+            put("PhysicsComponent", "");
+            // put("RenderComponent", "");
+            put("TransformComponent", "");
+        }};
     }
     
     public GameObject(String name) {
@@ -77,6 +88,30 @@ public class GameObject {
             }
         }
         return null;
+    }
+
+    /**
+     * 获取所有组件记录
+     */
+    public String getRecords() {
+        StringBuilder records = new StringBuilder();
+        for (Component<?> component : components) {
+            // 生命组件暂时无需记录
+            if (component.getComponentType() == LifeFeatureComponent.class) continue;
+            if (component.getComponentType() == RenderComponent.class) continue;
+
+            // 组件不完整，则不记录
+            if (!component.isEnabled()) return "";
+
+            String recordLine = component.record();
+            if (!recordLine.isEmpty()) {
+                records.append(recordLine);
+            }
+
+            MovingStepsMap.put(component.getComponentType().getSimpleName(), recordLine);
+        }
+        MovingStepsMap.put("GameIdentity", this.identity);
+        return MovingStepsMap.toString();
     }
     
     /**

@@ -9,6 +9,8 @@ import com.gameengine.graphics.Renderer;
 import com.gameengine.math.Vector2;
 import com.gameengine.scene.Scene;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.util.*;
 
 import com.gameengine.core.GameEngine;
@@ -24,6 +26,14 @@ public class GameScene extends Scene {
     private GameLogic gameLogic;
     private int level;
     private GameEngine engine;
+
+    // 录制系统
+    private boolean isRecording;
+    @SuppressWarnings("unused")
+    private FileWriter recordingWriter;
+    private float recordingTimer = 0f;
+    private static final float RECORDING_INTERVAL = 0.02f; // 每0.02秒记录一次
+    private float keyTimer = 0f;
 
     // 粒子效果系统
     private ParticleSystem playerParticles;
@@ -42,6 +52,13 @@ public class GameScene extends Scene {
         this.random = new Random();
         this.time = 0;
         this.engine = engine;
+        this.isRecording = false;
+        this.recordingWriter = null;
+    }
+
+    public void setRecording(FileWriter fw) {
+        this.isRecording = true;
+        this.recordingWriter = fw;
     }
 
     @Override
@@ -86,6 +103,35 @@ public class GameScene extends Scene {
             return;
         }
 
+        // 录制按钮
+        if (engine.getInputManager().isKeyJustPressed(82)) { // GLFW_KEY_ENTER
+            if (!isRecording) {
+                System.out.println("开始录制游戏...");
+                try {
+                    this.recordingWriter = new FileWriter("recordings/recording_" + System.currentTimeMillis() + ".txt", true);
+                    this.isRecording = true;
+                } catch (Exception e) {
+                    System.err.println("无法创建录制文件: " + e.getMessage());
+                    this.isRecording = false;
+                    this.recordingWriter = null;
+                }
+            } else {
+                System.out.println("结束录制游戏");
+                this.isRecording = false;
+                this.recordingWriter = null;
+                // 手动关闭 FileWriter
+                if (this.recordingWriter != null) {
+                    try {
+                        this.recordingWriter.flush();
+                        this.recordingWriter.close();
+                    } catch (Exception e) {
+                        System.err.println("关闭录制文件时出错: " + e.getMessage());
+                    }
+                    this.recordingWriter = null;
+                }
+            }
+        }
+
         // 游戏使用到的逻辑规则
         gameLogic.handlePlayerInput();
         gameLogic.updatePhysics();
@@ -93,6 +139,17 @@ public class GameScene extends Scene {
         gameLogic.updateAttack(deltaTime);
         gameLogic.updateEnemyAttack(deltaTime);
         gameLogic.checkEntityAlive();
+
+        // 记录游戏过程（每0.1秒记录一次）
+        if (isRecording && recordingWriter != null) {
+            recordingTimer += deltaTime;
+            keyTimer += deltaTime;
+
+            if (recordingTimer >= RECORDING_INTERVAL) {
+                gameLogic.updateRecords(keyTimer, recordingWriter);
+                recordingTimer = 0f;
+            }
+        }
 
         boolean wasGameOver = gameLogic.isGameOver();
         gameLogic.checkAiCollisions(deltaTime);

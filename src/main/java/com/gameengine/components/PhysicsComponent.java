@@ -63,6 +63,18 @@ public class PhysicsComponent extends Component<PhysicsComponent> {
     public void render() {
         // 物理组件不直接渲染
     }
+
+    @Override
+    public String record() {
+        // 记录物理状态（位置、速度等）
+        String recordLine = "";
+        if (owner != null) {
+            recordLine = String.format("%f|%f",
+                    velocity.x,
+                    velocity.y);
+        }
+        return recordLine;
+    }
     
     /**
      * 应用力

@@ -8,6 +8,7 @@ import com.gameengine.math.Vector2;
 import com.gameengine.scene.Scene;
 
 import java.util.List;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -114,6 +115,32 @@ public class GameLogic {
             .filter(obj -> obj.getidentity().equals("Player Skill"))
             .filter(obj -> obj.isActive())
             .collect(Collectors.toList());
+    }
+
+    /**
+     * 记录游戏对象的当前状态
+     */
+    public void updateRecords(float keyTimer, FileWriter recordingWriter) {
+
+        String records = "";
+        for (GameObject obj : scene.getGameObjects()) {
+
+            if (!obj.isActive()) continue;
+
+            if (obj.getidentity().equals("None")) continue; // 对于无身份的对象不记录
+
+            String singleRecord = obj.getRecords();
+            records += singleRecord + ";";
+        }
+        records = "deltaTime=" + keyTimer + ";" + records;
+        try {
+                if (!records.isEmpty()) {
+                    recordingWriter.write(records);
+                    recordingWriter.write("\n");
+                }
+            } catch (Exception e) {
+                System.err.println("记录游戏对象状态时出错: " + e.getMessage());
+            }
     }
 
     /**

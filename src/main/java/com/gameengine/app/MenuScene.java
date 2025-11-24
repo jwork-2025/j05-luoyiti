@@ -131,11 +131,9 @@ public class MenuScene extends Scene {
     }
     
     private void switchToReplayScene() {
-        // 回放功能暂未实现
 
-
-
-        
+        Scene replayMenuScene = new ReplayScene(engine, null);
+        engine.setScene(replayMenuScene);
         showReplayInfo = true;
     }
     

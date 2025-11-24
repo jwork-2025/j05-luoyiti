@@ -93,6 +93,18 @@ public class RenderComponent extends Component<RenderComponent> {
                 break;
         }
     }
+
+    @Override
+    public String record() {
+        // 记录渲染状态（颜色等）
+        String recordLine = String.format("%s|%f|%f|%f|%f",
+                renderType.name(),
+                color.r,
+                color.g,
+                color.b,
+                color.a);
+        return recordLine;
+    }
     
     /**
      * 设置渲染器

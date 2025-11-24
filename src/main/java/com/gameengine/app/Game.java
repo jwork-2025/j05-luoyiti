@@ -30,4 +30,6 @@ public class Game {
 
         System.out.println("游戏结束");
     }
+
+    
 }

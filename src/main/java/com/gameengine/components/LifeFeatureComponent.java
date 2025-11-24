@@ -73,6 +73,15 @@ public class LifeFeatureComponent extends Component<LifeFeatureComponent> {
         // TODO Auto-generated method stub
     }
 
+    @Override
+    public String record() {
+        String recordLine = "";
+        if (owner != null) {
+            recordLine = String.format("LifeFeature:%d,%f;", blood, lifetime);
+        }
+        return recordLine;
+    }
+
     public int getBlood() {
         return this.blood;
     }

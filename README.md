@@ -1,6 +1,20 @@
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/iHSjCEgj)
 # J05
 
+> 罗一逖 231820309
+
+## 作业说明
+
+1. 将录制功能主要委托在组件上，通过对 `Component` 及其子类定义 `record` 方法，以记录每次更新时各组件的变化，并通过 `GameLogic` 类统一收集这些组件的变化，最终将所有的组件保留在 `txt` 文件中
+3. 最后，通过 `RecordingScene` 场景中定义的方法，解析 `txt` 文件中保存的内容，根据各组件变化的数值同步还原各个实体的变化，从而实现一个类似于”录像“的模拟功能
+
+视频已发布于b站
+
+请：[点击这里](https://www.bilibili.com/video/BV1S5UyBhEUm/?spm_id_from=333.1387.homepage.video_card.click&vd_source=8406b05fa4fbafc453a0003b7d66d3c6)
+
+
+<!--
+
 本版本采用 LWJGL + OpenGL 实现纯 GPU 渲染，窗口与输入基于 GLFW，文本渲染通过 AWT 字体离屏生成纹理后在 OpenGL 中批量绘制。
 
 
@@ -54,3 +68,5 @@
 提示：请尽量保持模块解耦（渲染/输入/逻辑/存储）。
 
 **重要提醒：尽量手写代码，不依赖自动生成，考试会考！**
+
+-->

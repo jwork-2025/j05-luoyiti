@@ -36,6 +36,14 @@ public abstract class Component<T extends Component<T>> {
     public void destroy() {
         this.enabled = false;
     }
+
+    /**
+     * 记录组件
+     */
+    public String record() {
+        // 默认不实现录制功能，子类可重写
+        return "";
+    }
     
     /**
      * 获取组件类型

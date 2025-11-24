@@ -42,6 +42,16 @@ public class TransformComponent extends Component<TransformComponent> {
     public void render() {
         // 变换组件不直接渲染
     }
+
+    @Override
+    public String record() {
+        String recordLine = "";
+        if (owner != null) {
+            recordLine = String.format("%f|%f|%f|%f|%f", 
+                position.x, position.y, rotation, scale.x, scale.y);
+        }
+        return recordLine;
+    }
     
     /**
      * 移动到指定位置
